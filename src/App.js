@@ -8,11 +8,22 @@ const initialItems = [
 ];
 
 export default function App() {
+  const [items, setItems] = useState([]);
+  function handelAddItems(item){
+    setItems(items => [...items, item])
+  }
+  function handelDeleteItem(id){
+    console.log(id);
+    setItems(items => items.filter(item=>item.id !== id))
+  }
+  function handelToggleItem(id){
+    setItems(items=>items.map(item => item.id === id ? { ...item, packed: !item.packed} : item))
+  }
   return (
     <div className="app">
       <Logo />
-      <Form />
-      <PackingList />
+      <Form onAddItems={handelAddItems}  />
+      <PackingList items={items} onDeleteItem = {handelDeleteItem} onUpdateItem = {handelToggleItem}/>
       <Stats />
     </div>
   );
@@ -21,14 +32,15 @@ export default function App() {
 function Logo() {
   return <h1>🏝️ Far away 💼</h1>;
 }
-function Form() {
+function Form({onAddItems}) {
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState(1);
 
   function handelSubmit(e) {
     e.preventDefault();
+    if (!description) return;
     const newItem= {id: Date.now(), description, quantity, packed : false}
-    initialItems.push(newItem);
+    onAddItems(newItem);
     setDescription("");
     setQuantity(1);
   }
@@ -53,17 +65,30 @@ function Form() {
     </form>
   );
 }
-function PackingList() {
+function PackingList({items, onDeleteItem, onUpdateItem}) {
   return (
     <div className="list">
       <ul>
-        {initialItems.map((item) => (
-          <Item item={item} key={item.id} />
+        {items.map((item) => (
+          <Item item={item} key={item.id} onDeleteItem={onDeleteItem} onUpdateItem={onUpdateItem}/>
         ))}
       </ul>
     </div>
   );
 }
+
+function Item({ item, onDeleteItem, onUpdateItem }) {
+  return (
+    <li className="item">
+    <input type="checkbox" value={item.packed} onChange={() =>{onUpdateItem(item.id)}}/>
+      <span style={item.packed ? { textDecoration: "line-through" } : {}}>
+        {`${item.quantity} ${item.description}`}
+      </span>
+      <button onClick={() => onDeleteItem(item.id)}>❌</button>
+    </li>
+  );
+}
+
 function Stats() {
   return (
     <footer className="stats">
@@ -72,13 +97,4 @@ function Stats() {
   );
 }
 
-function Item({ item }) {
-  return (
-    <li className="item">
-      <span style={item.packed ? { textDecoration: "line-through" } : {}}>
-        {`${item.quantity} ${item.description}`}
-      </span>
-      <button>❌</button>
-    </li>
-  );
-}
+
